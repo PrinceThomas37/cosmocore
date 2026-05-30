@@ -1,0 +1,31 @@
+CosmoCore — file checklist
+==========================
+
+cosmocore/
+├── .gitignore
+├── README.md
+├── GIT_STEPS.md          ← Git instructions (start here for GitHub)
+├── GITHUB_SETUP.md
+├── docker-compose.yml
+├── PROJECT_FILES.txt
+├── scripts/
+│   └── init-and-push.ps1
+├── backend/
+│   ├── app.py            ← FastAPI
+│   ├── engine.py         ← Swiss Ephemeris calculations
+│   ├── config.py
+│   ├── database.py
+│   ├── worker.py
+│   ├── celery_app.py
+│   ├── schema.sql
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── .env.example
+│   └── ephe/
+│       ├── README.md     ← how to download .se1 files
+│       └── .gitkeep
+└── mobile/
+    ├── App.js
+    ├── app.json
+    ├── package.json
+    └── babel.config.js
