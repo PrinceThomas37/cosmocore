@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CosmoCore — Dual-Engine Astrology</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="title">COSMOCORE</h1>
+      <p class="subtitle">Swiss Ephemeris • Western + Vedic</p>
+    </header>
+
+    <section class="form-card" id="form-section">
+      <h2 class="form-heading">Birth details</h2>
+      <form id="chart-form" novalidate>
+        <div class="field">
+          <label for="display_name">Name</label>
+          <input type="text" id="display_name" name="display_name" value="Guest" required maxlength="100" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="birth_date">Date</label>
+            <input type="date" id="birth_date" name="birth_date" value="1995-08-15" required />
+          </div>
+          <div class="field">
+            <label for="birth_time">Time</label>
+            <input type="time" id="birth_time" name="birth_time" value="14:30" required />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="latitude">Latitude</label>
+            <input type="number" id="latitude" name="latitude" value="40.7128" step="any" min="-90" max="90" required />
+          </div>
+          <div class="field">
+            <label for="longitude">Longitude</label>
+            <input type="number" id="longitude" name="longitude" value="-74.006" step="any" min="-180" max="180" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="timezone_id">Timezone</label>
+          <input type="text" id="timezone_id" name="timezone_id" value="America/New_York" placeholder="America/New_York" required />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="current_age">Age</label>
+            <input type="number" id="current_age" name="current_age" value="28.5" step="0.1" min="0" max="120" />
+          </div>
+          <div class="field field-checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" id="is_nocturnal" name="is_nocturnal" />
+              Night birth (Firdaria)
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" id="submit-btn">Generate chart</button>
+      </form>
+      <p class="form-hint" id="status-hint" hidden></p>
+    </section>
+
+    <div id="loading" class="loading" hidden>
+      <div class="spinner"></div>
+      <p>Calculating chart…</p>
+    </div>
+
+    <div id="error-panel" class="error-panel" hidden>
+      <p class="error-title">Could not load chart</p>
+      <p class="error-text" id="error-text"></p>
+      <button type="button" class="btn-secondary" id="retry-btn">Try again</button>
+    </div>
+
+    <div id="results" class="results" hidden>
+      <div class="tab-row" role="tablist">
+        <button type="button" class="tab active" data-mode="WESTERN" role="tab" aria-selected="true">WESTERN</button>
+        <button type="button" class="tab" data-mode="VEDIC" role="tab" aria-selected="false">VEDIC</button>
+      </div>
+
+      <div id="panel-western" class="card panel" role="tabpanel">
+        <p class="card-tag">Tropical planets</p>
+        <div id="western-planets"></div>
+        <p class="card-tag section-gap">Angles</p>
+        <div id="western-angles"></div>
+        <p class="card-tag section-gap">Aspects</p>
+        <div id="western-aspects"></div>
+      </div>
+
+      <div id="panel-vedic" class="card panel" hidden role="tabpanel">
+        <p class="card-tag" id="vedic-header">Jyotish</p>
+        <div id="vedic-body"></div>
+      </div>
+
+      <div class="card timeline-card">
+        <p class="card-tag">Firdaria</p>
+        <p class="hero-text" id="firdaria-text"></p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="firdaria-progress"></div>
+        </div>
+      </div>
+
+      <div class="card map-card">
+        <p class="card-tag">Astrocartography (Sun)</p>
+        <div id="acg-lines"></div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
