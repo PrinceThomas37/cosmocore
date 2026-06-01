@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from config import get_settings
@@ -41,7 +44,7 @@ class BirthProfilePayload(BaseModel):
     timezone_id: str = Field(..., description="IANA timezone, e.g. America/New_York")
     current_age: float = Field(25.0, ge=0, le=120)
     is_nocturnal: bool = False
-    persist: bool = True
+    persist: bool = False
 
 
 def _parse_birth_datetime(birth_date: str, birth_time: str, timezone_id: str) -> datetime:
