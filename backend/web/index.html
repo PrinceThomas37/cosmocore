@@ -92,12 +92,25 @@
     </div>
 
     <div id="results" class="results" hidden>
-      <div class="tab-row" role="tablist">
-        <button type="button" class="tab active" data-mode="WESTERN" role="tab" aria-selected="true">WESTERN</button>
-        <button type="button" class="tab" data-mode="VEDIC" role="tab" aria-selected="false">VEDIC</button>
+      <div class="tab-row main-tabs" role="tablist">
+        <button type="button" class="tab active" data-view="READINGS" role="tab" aria-selected="true">READINGS</button>
+        <button type="button" class="tab" data-view="WESTERN" role="tab" aria-selected="false">CHART</button>
+        <button type="button" class="tab" data-view="VEDIC" role="tab" aria-selected="false">VEDIC</button>
       </div>
 
-      <div id="panel-western" class="card panel" role="tabpanel">
+      <div id="panel-readings" class="panel-readings" role="tabpanel">
+        <p class="readings-intro">Tap a topic to see what your chart suggests in plain language.</p>
+        <div class="insight-chips" id="insight-chips" role="tablist"></div>
+        <div class="card insight-card" id="insight-card">
+          <p class="card-tag" id="insight-tag">Your reading</p>
+          <h3 class="insight-title" id="insight-title"></h3>
+          <p class="insight-summary" id="insight-summary"></p>
+          <ul class="insight-bullets" id="insight-bullets"></ul>
+        </div>
+        <p class="form-hint insight-disclaimer" id="insight-disclaimer"></p>
+      </div>
+
+      <div id="panel-western" hidden class="card panel" role="tabpanel">
         <p class="card-tag">Tropical planets</p>
         <div id="western-planets"></div>
         <p class="card-tag section-gap">Angles</p>

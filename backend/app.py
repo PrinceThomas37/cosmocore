@@ -5,13 +5,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from config import get_settings
@@ -44,7 +41,7 @@ class BirthProfilePayload(BaseModel):
     timezone_id: str = Field(..., description="IANA timezone, e.g. America/New_York")
     current_age: float = Field(25.0, ge=0, le=120)
     is_nocturnal: bool = False
-    persist: bool = False
+    persist: bool = True
 
 
 def _parse_birth_datetime(birth_date: str, birth_time: str, timezone_id: str) -> datetime:
@@ -64,20 +61,6 @@ def _parse_birth_datetime(birth_date: str, birth_time: str, timezone_id: str) ->
         raise HTTPException(status_code=400, detail="birth_time must be HH:MM or HH:MM:SS")
 
     return local_dt.replace(tzinfo=ZoneInfo(timezone_id)).astimezone(ZoneInfo("UTC"))
-
-
-WEB_DIR = Path(__file__).resolve().parent / "web"
-
-if WEB_DIR.is_dir():
-    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
-
-
-@app.get("/")
-async def serve_web_ui():
-    index = WEB_DIR / "index.html"
-    if not index.is_file():
-        raise HTTPException(status_code=404, detail="Web UI not found")
-    return FileResponse(index)
 
 
 @app.get("/health")
@@ -116,6 +99,13 @@ async def compute_master_chart(payload: BirthProfilePayload):
                     detail=f"Chart computed but database save failed: {db_err}",
                 ) from db_err
 
+        insights = CosmoCoreInsightsEngine.generate(
+            chart,
+            lat=payload.latitude,
+            lon=payload.longitude,
+            timezone_id=payload.timezone_id,
+        )
+
         return {
             "user_id": user_id,
             "display_name": payload.display_name,
@@ -125,6 +115,7 @@ async def compute_master_chart(payload: BirthProfilePayload):
             "vedic": chart["vedic"],
             "firdaria": chart["firdaria"],
             "astrocartography": chart["astrocartography"],
+            "insights": insights,
         }
     except HTTPException:
         raise

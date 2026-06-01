@@ -18,27 +18,76 @@
   const lonInput = document.getElementById("longitude");
   const tzInput = document.getElementById("timezone_id");
 
-  let engineMode = "WESTERN";
+  let mainView = "READINGS";
+  let insightCategory = "today";
+  let chartInsights = null;
   let lastPayload = null;
   let selectedPlace = null;
   let searchTimer = null;
 
-  const tabs = document.querySelectorAll(".tab");
+  const mainTabs = document.querySelectorAll(".main-tabs .tab");
+  const panelReadings = document.getElementById("panel-readings");
   const panelWestern = document.getElementById("panel-western");
   const panelVedic = document.getElementById("panel-vedic");
+  const insightChips = document.getElementById("insight-chips");
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      engineMode = tab.dataset.mode;
-      tabs.forEach((t) => {
-        const active = t.dataset.mode === engineMode;
-        t.classList.toggle("active", active);
-        t.setAttribute("aria-selected", active ? "true" : "false");
-      });
-      panelWestern.hidden = engineMode !== "WESTERN";
-      panelVedic.hidden = engineMode !== "VEDIC";
+  const INSIGHT_LABELS = {
+    today: "Today",
+    tomorrow: "Tomorrow",
+    relationships: "Love",
+    money: "Money",
+    family: "Family",
+    kids: "Kids",
+  };
+
+  function setMainView(view) {
+    mainView = view;
+    mainTabs.forEach((t) => {
+      const active = t.dataset.view === view;
+      t.classList.toggle("active", active);
+      t.setAttribute("aria-selected", active ? "true" : "false");
     });
+    panelReadings.hidden = view !== "READINGS";
+    panelWestern.hidden = view !== "WESTERN";
+    panelVedic.hidden = view !== "VEDIC";
+  }
+
+  mainTabs.forEach((tab) => {
+    tab.addEventListener("click", () => setMainView(tab.dataset.view));
   });
+
+  function renderInsightChips() {
+    insightChips.replaceChildren();
+    Object.entries(INSIGHT_LABELS).forEach(([key, label]) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "insight-chip" + (key === insightCategory ? " active" : "");
+      btn.textContent = label;
+      btn.dataset.category = key;
+      btn.addEventListener("click", () => {
+        insightCategory = key;
+        renderInsightChips();
+        renderInsightPanel();
+      });
+      insightChips.appendChild(btn);
+    });
+  }
+
+  function renderInsightPanel() {
+    if (!chartInsights || !chartInsights[insightCategory]) return;
+    const block = chartInsights[insightCategory];
+    document.getElementById("insight-title").textContent = block.title || "";
+    document.getElementById("insight-summary").textContent = block.summary || "";
+    const ul = document.getElementById("insight-bullets");
+    ul.replaceChildren();
+    (block.bullets || []).forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+    const disclaimer = chartInsights._meta?.disclaimer || "";
+    document.getElementById("insight-disclaimer").textContent = disclaimer;
+  }
 
   function formatPlaceLabel(item) {
     const parts = [item.name];
@@ -245,6 +294,16 @@
       p.textContent = `• h${vec.hour_meridian}: lat ${vec.lat}, lon ${vec.lon}`;
       acg.appendChild(p);
     });
+
+
+    chartInsights = data.insights || null;
+    if (chartInsights) {
+      renderInsightChips();
+      renderInsightPanel();
+      setMainView("READINGS");
+    } else {
+      setMainView("WESTERN");
+    }
 
     hideError();
     results.hidden = false;
