@@ -7,12 +7,8 @@ import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pathlib import Path
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from config import get_settings
@@ -65,6 +61,20 @@ def _parse_birth_datetime(birth_date: str, birth_time: str, timezone_id: str) ->
         raise HTTPException(status_code=400, detail="birth_time must be HH:MM or HH:MM:SS")
 
     return local_dt.replace(tzinfo=ZoneInfo(timezone_id)).astimezone(ZoneInfo("UTC"))
+
+
+WEB_DIR = Path(__file__).resolve().parent / "web"
+
+if WEB_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+
+
+@app.get("/")
+async def serve_web_ui():
+    index = WEB_DIR / "index.html"
+    if not index.is_file():
+        raise HTTPException(status_code=404, detail="Web UI not found")
+    return FileResponse(index)
 
 
 @app.get("/health")
