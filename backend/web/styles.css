@@ -86,10 +86,66 @@ body {
   border-color: transparent;
 }
 
+.field-place {
+  position: relative;
+}
+
+.place-suggestions {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+
+.place-suggestions button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.place-suggestions button:hover {
+  background: #334155;
+}
+
+.field-help {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.field-help.error {
+  color: #f87171;
+}
+
+.coords-panel {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #0b1220;
+  border: 1px solid #1e293b;
+}
+
+.coords-panel input[readonly] {
+  color: #94a3b8;
+  cursor: default;
+}
+
 .field-checkbox {
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 4px;
+  margin-bottom: 12px;
 }
 
 .checkbox-label {

@@ -20,43 +20,62 @@
           <label for="display_name">Name</label>
           <input type="text" id="display_name" name="display_name" value="Guest" required maxlength="100" />
         </div>
+
+        <div class="field field-place">
+          <label for="birth_place">Place of birth</label>
+          <input
+            type="text"
+            id="birth_place"
+            name="birth_place"
+            autocomplete="off"
+            placeholder="City, state or country — e.g. Mumbai, India"
+            required
+          />
+          <ul id="place-suggestions" class="place-suggestions" hidden></ul>
+          <p class="field-help" id="place-status">Search and pick your birth city from the list.</p>
+        </div>
+
         <div class="field-row">
           <div class="field">
-            <label for="birth_date">Date</label>
+            <label for="birth_date">Date of birth</label>
             <input type="date" id="birth_date" name="birth_date" value="1995-08-15" required />
           </div>
           <div class="field">
-            <label for="birth_time">Time</label>
+            <label for="birth_time">Time of birth</label>
             <input type="time" id="birth_time" name="birth_time" value="14:30" required />
           </div>
         </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="latitude">Latitude</label>
-            <input type="number" id="latitude" name="latitude" value="40.7128" step="any" min="-90" max="90" required />
+
+        <div class="coords-panel" id="coords-panel" hidden>
+          <div class="field-row">
+            <div class="field">
+              <label for="latitude">Latitude</label>
+              <input type="text" id="latitude" name="latitude" readonly tabindex="-1" />
+            </div>
+            <div class="field">
+              <label for="longitude">Longitude</label>
+              <input type="text" id="longitude" name="longitude" readonly tabindex="-1" />
+            </div>
           </div>
           <div class="field">
-            <label for="longitude">Longitude</label>
-            <input type="number" id="longitude" name="longitude" value="-74.006" step="any" min="-180" max="180" required />
+            <label for="timezone_id">Timezone</label>
+            <input type="text" id="timezone_id" name="timezone_id" readonly tabindex="-1" />
           </div>
         </div>
-        <div class="field">
-          <label for="timezone_id">Timezone</label>
-          <input type="text" id="timezone_id" name="timezone_id" value="America/New_York" placeholder="America/New_York" required />
+
+        <div class="field field-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" id="is_nocturnal" name="is_nocturnal" />
+            Born at night (for Firdaria timing)
+          </label>
+          <p class="field-help">
+            Firdaria is a life-period system in traditional astrology. Check this only if the birth
+            happened after sunset and before sunrise — it uses a different planet order for those early
+            years. Leave unchecked for a daytime birth.
+          </p>
         </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="current_age">Age</label>
-            <input type="number" id="current_age" name="current_age" value="28.5" step="0.1" min="0" max="120" />
-          </div>
-          <div class="field field-checkbox">
-            <label class="checkbox-label">
-              <input type="checkbox" id="is_nocturnal" name="is_nocturnal" />
-              Night birth (Firdaria)
-            </label>
-          </div>
-        </div>
-        <button type="submit" class="btn-primary" id="submit-btn">Generate chart</button>
+
+        <button type="submit" class="btn-primary" id="submit-btn" disabled>Generate chart</button>
       </form>
       <p class="form-hint" id="status-hint" hidden></p>
     </section>

@@ -1,6 +1,7 @@
 (function () {
+  const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
+
   const form = document.getElementById("chart-form");
-  const formSection = document.getElementById("form-section");
   const loading = document.getElementById("loading");
   const errorPanel = document.getElementById("error-panel");
   const errorText = document.getElementById("error-text");
@@ -9,8 +10,18 @@
   const retryBtn = document.getElementById("retry-btn");
   const statusHint = document.getElementById("status-hint");
 
+  const birthPlace = document.getElementById("birth_place");
+  const placeSuggestions = document.getElementById("place-suggestions");
+  const placeStatus = document.getElementById("place-status");
+  const coordsPanel = document.getElementById("coords-panel");
+  const latInput = document.getElementById("latitude");
+  const lonInput = document.getElementById("longitude");
+  const tzInput = document.getElementById("timezone_id");
+
   let engineMode = "WESTERN";
   let lastPayload = null;
+  let selectedPlace = null;
+  let searchTimer = null;
 
   const tabs = document.querySelectorAll(".tab");
   const panelWestern = document.getElementById("panel-western");
@@ -29,9 +40,121 @@
     });
   });
 
+  function formatPlaceLabel(item) {
+    const parts = [item.name];
+    if (item.admin1) parts.push(item.admin1);
+    if (item.country) parts.push(item.country);
+    return parts.join(", ");
+  }
+
+  function applyPlace(item) {
+    selectedPlace = item;
+    birthPlace.value = formatPlaceLabel(item);
+    latInput.value = Number(item.latitude).toFixed(5);
+    lonInput.value = Number(item.longitude).toFixed(5);
+    tzInput.value = item.timezone || "";
+    coordsPanel.hidden = false;
+    placeSuggestions.hidden = true;
+    placeSuggestions.replaceChildren();
+    placeStatus.textContent = `Using ${formatPlaceLabel(item)} • ${item.timezone}`;
+    placeStatus.classList.remove("error");
+    updateSubmitState();
+  }
+
+  function clearPlace() {
+    selectedPlace = null;
+    latInput.value = "";
+    lonInput.value = "";
+    tzInput.value = "";
+    coordsPanel.hidden = true;
+    updateSubmitState();
+  }
+
+  function updateSubmitState() {
+    const hasPlace =
+      selectedPlace &&
+      latInput.value &&
+      lonInput.value &&
+      tzInput.value;
+    submitBtn.disabled = !hasPlace;
+  }
+
+  async function searchPlaces(query) {
+    const url = `${GEOCODE_URL}?name=${encodeURIComponent(query)}&count=6&language=en`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Place search failed");
+    const data = await res.json();
+    return data.results || [];
+  }
+
+  function showSuggestions(items) {
+    placeSuggestions.replaceChildren();
+    if (!items.length) {
+      placeSuggestions.hidden = true;
+      placeStatus.textContent = "No places found — try a nearby city name.";
+      placeStatus.classList.add("error");
+      return;
+    }
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = formatPlaceLabel(item);
+      btn.addEventListener("click", () => applyPlace(item));
+      li.appendChild(btn);
+      placeSuggestions.appendChild(li);
+    });
+    placeSuggestions.hidden = false;
+    placeStatus.textContent = "Pick your birth place from the list.";
+    placeStatus.classList.remove("error");
+  }
+
+  birthPlace.addEventListener("input", () => {
+    clearPlace();
+    const q = birthPlace.value.trim();
+    if (searchTimer) clearTimeout(searchTimer);
+    if (q.length < 2) {
+      placeSuggestions.hidden = true;
+      placeStatus.textContent = "Type at least 2 letters, then choose from the list.";
+      placeStatus.classList.remove("error");
+      return;
+    }
+    placeStatus.textContent = "Searching…";
+    searchTimer = setTimeout(async () => {
+      try {
+        const items = await searchPlaces(q);
+        showSuggestions(items);
+      } catch {
+        placeStatus.textContent = "Could not search places. Check your connection.";
+        placeStatus.classList.add("error");
+      }
+    }, 350);
+  });
+
+  function ageFromBirthDate(birthDateStr) {
+    const birth = new Date(birthDateStr + "T12:00:00");
+    const now = new Date();
+    const ms = now - birth;
+    return Math.max(0, ms / (365.25 * 24 * 60 * 60 * 1000));
+  }
+
+  function buildPayload() {
+    return {
+      display_name: document.getElementById("display_name").value.trim(),
+      birth_date: document.getElementById("birth_date").value,
+      birth_time: document.getElementById("birth_time").value.slice(0, 5),
+      latitude: parseFloat(latInput.value, 10),
+      longitude: parseFloat(lonInput.value, 10),
+      timezone_id: tzInput.value.trim(),
+      current_age: Math.round(ageFromBirthDate(document.getElementById("birth_date").value) * 10) / 10,
+      is_nocturnal: document.getElementById("is_nocturnal").checked,
+      persist: false,
+    };
+  }
+
   function showLoading(on) {
     loading.hidden = !on;
-    submitBtn.disabled = on;
+    submitBtn.disabled = on || !selectedPlace;
   }
 
   function showError(msg) {
@@ -42,21 +165,6 @@
 
   function hideError() {
     errorPanel.hidden = true;
-  }
-
-  function buildPayload() {
-    const age = parseFloat(document.getElementById("current_age").value, 10);
-    return {
-      display_name: document.getElementById("display_name").value.trim(),
-      birth_date: document.getElementById("birth_date").value,
-      birth_time: document.getElementById("birth_time").value.slice(0, 5),
-      latitude: parseFloat(document.getElementById("latitude").value, 10),
-      longitude: parseFloat(document.getElementById("longitude").value, 10),
-      timezone_id: document.getElementById("timezone_id").value.trim(),
-      current_age: Number.isFinite(age) ? age : 25,
-      is_nocturnal: document.getElementById("is_nocturnal").checked,
-      persist: false,
-    };
   }
 
   function row(label, value) {
@@ -145,6 +253,11 @@
   }
 
   async function fetchChart(payload) {
+    if (!payload.timezone_id || !Number.isFinite(payload.latitude)) {
+      showError("Please select your place of birth from the search list first.");
+      return;
+    }
+
     lastPayload = payload;
     hideError();
     showLoading(true);
@@ -183,4 +296,12 @@
     if (lastPayload) fetchChart(lastPayload);
     else form.requestSubmit();
   });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".field-place")) {
+      placeSuggestions.hidden = true;
+    }
+  });
+
+  updateSubmitState();
 })();

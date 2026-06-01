@@ -101,7 +101,12 @@ class CosmoCoreMasterEngine:
 
         positions: dict[str, dict[str, Any]] = {}
         for name, planet_id in cls.PLANETS.items():
-            calc, ret = swe.calc_ut(jd, planet_id, flag)
+            try:
+                calc, ret = swe.calc_ut(jd, planet_id, flag)
+            except Exception:
+                continue
+            if ret < 0:
+                continue
             longitude = calc[0] % 360
             declination = calc[1]
             distance = calc[2]
