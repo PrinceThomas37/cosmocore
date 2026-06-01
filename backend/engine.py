@@ -101,15 +101,12 @@ class CosmoCoreMasterEngine:
 
         positions: dict[str, dict[str, Any]] = {}
         for name, planet_id in cls.PLANETS.items():
-            try:
-                calc, ret = swe.calc_ut(jd, planet_id, flag)
-            except Exception:
-                continue
-            if ret < 0:
+            calc = cls._calc_ut_position(jd, planet_id, flag)
+            if calc is None:
                 continue
             longitude = calc[0] % 360
             declination = calc[1]
-            distance = calc[2]
+            distance = calc[2] if len(calc) > 2 else 0.0
             speed = calc[3] if len(calc) > 3 else 0.0
             positions[name] = {
                 "absolute_long": round(longitude, 6),
@@ -138,12 +135,22 @@ class CosmoCoreMasterEngine:
         house_system: str | None = None,
     ) -> dict[str, Any]:
         hs = house_system or get_settings().house_system
-        cusps, ascmc = swe.houses_ex(jd, lat, lon, hs.encode() if isinstance(hs, str) else hs)
+        hs_bytes = hs.encode() if isinstance(hs, str) else hs
+        try:
+            cusps, ascmc = swe.houses(jd, lat, lon, hs_bytes)
+        except Exception:
+            cusps, ascmc = swe.houses(jd, lat, lon, b"O")
+        if not ascmc or len(ascmc) < 2:
+            raise ValueError("House calculation failed for this location")
         house_cusps = []
-        for i in range(1, 13):
+        if len(cusps) >= 13:
+            house_indices = range(1, 13)
+        else:
+            house_indices = range(min(12, len(cusps)))
+        for house_num, i in enumerate(house_indices, start=1):
             cusp_long = cusps[i] % 360
             house_cusps.append({
-                "house": i,
+                "house": house_num,
                 **cls.extract_coordinate_sign_data(cusp_long),
             })
         angles = {
@@ -314,6 +321,10 @@ class CosmoCoreMasterEngine:
     ) -> dict[str, Any]:
         jd = cls.calculate_julian_date(utc_dt)
         raw = cls.calculate_true_planetary_positions(jd, lat, lon, is_topocentric=True)
+        if "Moon" not in raw or "Sun" not in raw:
+            raise ValueError(
+                "Could not calculate Sun/Moon positions. Ephemeris data may be missing on the server."
+            )
         ayanamsa = cls.get_lahiri_ayanamsa(jd)
         houses = cls.calculate_houses(jd, lat, lon)
 
